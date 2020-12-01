@@ -19,7 +19,6 @@ from datamodel import create_data_model, create_data_model_sample
     #4.5 remaining set of requests (these will be the dropped requests)
     #5 total distance of all routes
 class RouteSolution():
-    
     def get_solution(self, data, manager, routing, solution):
         #store the data in the object
         self.data = data
