@@ -5,6 +5,13 @@ from generatedata import generate_demand, generate_distance_matrix
 def create_data_model(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress):
     """Stores the data for the problem."""
     data = {}
+    
+    #lets make this model store the same things as the database to make it easy
+    data['loc_coord_list'] = loc_coord_list
+    data['plane_coord_list'] = plane_coord_list
+    
+
+
     #distance to each other node 
     #eg. [0][1] is the distance from node 0 to node 1
 

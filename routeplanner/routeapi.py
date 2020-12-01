@@ -22,15 +22,16 @@ class RouteManager(Resource):
         #we have to read values from the database to calculate the route
         args = route_put_args.parse_args()
         #python interprets the json as a dictionary  #probably... lol
-        args['loc_coord_list'] = loc_coord_list
-        args['plane_coord_list'] = plane_coord_list
-        args['pickups_deliveries'] = pickups_deliveries
-        args['pickups_deliveries_in_progress'] = pickups_deliveries_in_progress
+        loc_coord_list = args['loc_coord_list']
+        plane_coord_list = args['plane_coord_list']
+        pickups_deliveries = args['pickups_deliveries'] 
+        pickups_deliveries_in_progress = args['pickups_deliveries_in_progress'] 
 
 
-        #calculate optimized route and return as a json
-        return(solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress))
-
+        #calculate optimized route as a json
+        solution = solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress)
+        
+        return solution
 
 #add this resource(class) to the default directory
 api.add_resource(RouteManager, "/")

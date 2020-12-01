@@ -19,10 +19,14 @@ from datamodel import create_data_model, create_data_model_sample
     #4.5 remaining set of requests (these will be the dropped requests)
     #5 total distance of all routes
 class RouteSolution():
-
+    
     def get_solution(self, data, manager, routing, solution):
+        #store the data in the object
+        self.data = data
+
         #get dropped nodes
         self.dropped_nodes_list = []
+        #since we want the solver to be able to be iteratable, we need to inherit the old data
         self.pickups_deliveries_list_unfinished = []
         self.pickups_deliveries_list_not_started = []
         self.pickups_deliveries_list_false_delivery = []
@@ -86,7 +90,11 @@ class RouteSolution():
                     #if we land on dropoff node and have previously been to pickup node
                     if (request[1] == current_node) and (request[0] in self.route_node_list):
                         self.pickups_deliveries_completed.append(request)
-
+                #do the same for the in progress list
+                for request in data['current_pickups_deliveries']:
+                    #if we land on dropoff node and have previously been to pickup node
+                    if (request[1] == current_node) and (request[0] in self.route_node_list):
+                        self.pickups_deliveries_completed.append(request)
 
                 #iterate to next node        
                 previous_index = index
@@ -120,6 +128,11 @@ class RouteSolution():
                         "unfinished_deliveries": self.pickups_deliveries_list_unfinished,
                         "untouched_deliveries": self.pickups_deliveries_list_not_started,
                         "false_deliveries": self.pickups_deliveries_list_false_delivery,
+                        #just letting the json inherit all of the database items
+                        "loc_coord_list": self.data['loc_coord_list'],
+                        "plane_coord_list": self.data['plane_coord_list'],
+                        "pickups_deliveries": self.data['pickups_deliveries'], #we will process the finished deliveries, etc. in the api
+                        "pickups_deliveries_in_progress": self.data['current_pickups_deliveries'],
                         }
     def print_solution(self):
         print("\n##########################")
@@ -328,6 +341,10 @@ def solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveri
             else:
                 #normal penalty needs to be bigger than the total path length
                 penalty = PENALTY_CONST
+        #if there are no pickups_deliveries, we need to assign penalty as well
+        if data['pickups_deliveries'] == []:
+            penalty = PENALTY_CONST
+        
         #add the penalty (for dropping) to each node
         routing.AddDisjunction([manager.NodeToIndex(node)], penalty)
         
@@ -478,14 +495,14 @@ def solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveri
 
     # Print solution on console.
     if solution: #sometimes there is no solution or it can't calculate one fast enough
-        print_solution(data, manager, routing, solution)
+        #print_solution(data, manager, routing, solution)
         
 
         RS = RouteSolution()
         RS.get_solution(data, manager, routing, solution)
 
 
-        RS.print_solution()
+        #RS.print_solution()
 
 
         RS.make_json()
@@ -494,6 +511,7 @@ def solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveri
         return None
 
 if __name__ == '__main__':
+    
     #example data
     loc_coord_list = [(1,2), (2, 3), (3, 5)]
     plane_coord_list = [(0, 0), (4, 3), (2, 1)]
@@ -501,3 +519,4 @@ if __name__ == '__main__':
     pickups_deliveries_in_progress = [(6, 5, 1)]
 
     print(solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress))
+    
