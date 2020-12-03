@@ -29,6 +29,7 @@ class RouteSolution():
         self.pickups_deliveries_list_unfinished = []
         self.pickups_deliveries_list_not_started = []
         self.pickups_deliveries_list_false_delivery = []
+
         for node in range(routing.Size()):
             if routing.IsStart(node) or routing.IsEnd(node):
                 continue
@@ -45,7 +46,7 @@ class RouteSolution():
             #checks if we drop both dropoff and pickup
             #ie a delivery not started
             elif ((request[1] in self.dropped_nodes_list) and (request[0] in self.dropped_nodes_list)):
-                self.pickups_deliveries_list_not_started.append(request)
+                self.data['pickups_deliveries_queue'].append(request)
 
             #checks if we drop the pickup but not the dropoff
             #calling these false deliveries
@@ -125,7 +126,7 @@ class RouteSolution():
                         "dropped_nodes": self.dropped_nodes_list,
                         "finished_deliveries": self.pickups_deliveries_completed,
                         "unfinished_deliveries": self.pickups_deliveries_list_unfinished,
-                        "untouched_deliveries": self.pickups_deliveries_list_not_started,
+                        "pickups_deliveries_queue": self.data['pickups_deliveries_queue'],
                         "false_deliveries": self.pickups_deliveries_list_false_delivery,
                         #just letting the json inherit all of the database items
                         "loc_coord_list": self.data['loc_coord_list'],
@@ -274,14 +275,14 @@ def print_solution(data, manager, routing, solution):
  
 
 #main(MAX_TRAVEL_DIST, PENALTY, TIME_LIMIT)
-def solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress):
+def solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress, pickups_deliveries_queue):
     """Entry point of the program."""
     # Instantiate the data problem.
     #testing
     #data = create_data_model_sample()
 
     #use this for actual
-    data = create_data_model(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress)
+    data = create_data_model(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress, pickups_deliveries_queue)
 
     # Create the routing index manager.
     manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
@@ -516,6 +517,7 @@ if __name__ == '__main__':
     plane_coord_list = [(0, 0), (4, 3), (2, 1)]
     pickups_deliveries = [(4, 5, 1), (6, 4, 3)]
     pickups_deliveries_in_progress = [(6, 5, 1)]
+    pickups_deliveries_queue= [(5,6,4)]
 
-    print(solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress))
+    print(solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress, pickups_deliveries_queue))
     

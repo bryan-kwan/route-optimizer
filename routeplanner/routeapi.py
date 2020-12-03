@@ -26,39 +26,57 @@ class RouteManager(Resource):
         plane_coord_list = args['plane_coord_list']
         pickups_deliveries = args['pickups_deliveries'] 
         pickups_deliveries_in_progress = args['pickups_deliveries_in_progress'] 
+        pickups_deliveries_queue = args['pickups_deliveries_queue']
 
 
         #calculate optimized route as a json
-        solution = solve(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress)
+        solution = solve(loc_coord_list, plane_coord_list, pickups_deliveries, 
+                    pickups_deliveries_in_progress, pickups_deliveries_queue)
         
         #if we get a false delivery solution, it's basically useless
-        #so we need to remove the false deliveries and try to solve again
-        #and then put them back into the pickups_deliveries list
+        #so we need to move the deliveries that cause a false solution into queue
+        #then solve again
         def except_false_delivery(solution,loc_coord_list, plane_coord_list, pickups_deliveries, 
-            pickups_deliveries_in_progress):
+                    pickups_deliveries_in_progress, pickups_deliveries_queue):
             if solution['false_deliveries']:
-                dropped_deliveries = solution['false_deliveries'].copy()
                 for false_delivery in solution['false_deliveries']:
+                    solution['pickups_deliveries_queue'].append(false_delivery)
                     solution['pickups_deliveries'].remove(false_delivery)
-                
+
                 #solve without the error causing delivery requests
                 new_solution = solve(loc_coord_list, plane_coord_list, pickups_deliveries, 
-                    pickups_deliveries_in_progress)
-
-                #add the deliveries we removed back into the to-do list
-                new_solution['pickups_deliveries'] += dropped_deliveries
+                    pickups_deliveries_in_progress, pickups_deliveries_queue)
 
                 return new_solution
             else:
                 return solution
 
-        MAX_CHECKS_CONST = 10
-        #try to fix the 'false' solutions 
-        for i in range(MAX_CHECKS_CONST):
-            solution = except_false_delivery(solution,loc_coord_list, 
-                plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress)
-            
+        #sometimes there's no solution with the given constraints
+        def except_no_solution(solution,loc_coord_list, plane_coord_list, pickups_deliveries, 
+            pickups_deliveries_in_progress, pickups_deliveries_queue):
+            if solution is None:
+                #try moving pickups_deliveries to queue until there is a solution
+                delivery = solution['pickups_deliveries'][0]
+                solution['pickups_deliveries_queue'].append(delivery)
+                solution['pickups_deliveries'].remove(delivery)
+                #put into the solver
+                new_solution = solve(loc_coord_list, plane_coord_list, pickups_deliveries, 
+                    pickups_deliveries_in_progress, pickups_deliveries_queue)
+                
+                return new_solution
+            else:
+                return solution
+                
 
+        MAX_CHECKS_CONST = 10
+        for i in range(MAX_CHECKS_CONST):
+            #try to fix the no solutions
+            solution = except_no_solution(solution,loc_coord_list, 
+                plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress, pickups_deliveries_queue)
+            #try to fix the 'false' solutions 
+            solution = except_false_delivery(solution,loc_coord_list, 
+                plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress, pickups_deliveries_queue)
+            
             
 
         return solution

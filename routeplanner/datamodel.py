@@ -2,7 +2,7 @@
 from generatedata import generate_demand, generate_distance_matrix
 
 #input: list of location coordinates, list of plane coordinates, pickup/delivery requests (and in progress ones)
-def create_data_model(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress):
+def create_data_model(loc_coord_list, plane_coord_list, pickups_deliveries, pickups_deliveries_in_progress, pickups_deliveries_queue):
     """Stores the data for the problem."""
     data = {}
     
@@ -26,6 +26,9 @@ def create_data_model(loc_coord_list, plane_coord_list, pickups_deliveries, pick
     
     #keep track of pickup_deliveries in progress if we calculate mid-route
     data['current_pickups_deliveries'] = pickups_deliveries_in_progress
+
+    #keep track of in_queue pickup_deliveries that we will do in the future but don't want to solve with right now
+    data['pickups_deliveries_queue'] = pickups_deliveries_queue
     
     data['num_vehicles'] = len(plane_coord_list)
 
